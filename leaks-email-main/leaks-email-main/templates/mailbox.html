@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaks System - Caixa de Correio - {{ email }}</title>
+    <style>
+        :root {
+            --bg-main: #050505;
+            --bg-card: rgba(15, 23, 42, 0.75);
+            --bg-input: #111111;
+            --border-color: rgba(255, 255, 255, 0.16);
+            --border-focus: #ffffff;
+            --primary: #ffffff;
+            --primary-hover: #d4d4d4;
+            --danger: rgba(239, 68, 68, 0.15);
+            --danger-border: rgba(239, 68, 68, 0.4);
+            --danger-text: #fca5a5;
+            --text-main: #ffffff;
+            --text-muted: #a3a3a3;
+            --hover-bg: #181818;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 25px 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.035) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.035) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.018) 0%, transparent 60%);
+        }
+
+        /* Alerta Dinâmico Flutuante */
+        .alert-box {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-30px);
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            backdrop-filter: blur(16px);
+            color: #fca5a5;
+            padding: 14px 24px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .alert-box.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Wrapper Principal */
+        .leaks-dashboard-wrapper {
+            max-width: 680px;
+            width: 100%;
+            position: relative;
+        }
+
+        .leaks-dashboard-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent, rgba(255, 255, 255, 0.24));
+            border-radius: 26px;
+            z-index: -1;
+            filter: blur(8px);
+            opacity: 0.7;
+        }
+
+        /* Cabeçalho Interno do Dashboard */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-gif {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.24);
+        }
+
+        .brand-text {
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            color: #f5f5f5;
+            text-transform: uppercase;
+        }
+
+        .btn-pill {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #f5f5f5;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-pill:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: var(--primary);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Cartão Central do Dashboard */
+        .main-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 35px 30px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        .badge-counter {
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            color: #f5f5f5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .email-info-box {
+            background: var(--bg-input);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 12px 16px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .email-info-box span {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .email-badge {
+            color: #f5f5f5;
+            font-family: monospace;
+            font-size: 14px;
+            word-break: break-all;
+            font-weight: 600;
+        }
+
+        .divider {
+            border: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin: 24px 0;
+        }
+
+        h3 {
+            color: #d4d4d4;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+        }
+
+        /* Lista de Mensagens */
+        .message-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .message-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .message-list::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        .message-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 10px;
+        }
+
+        .message-item {
+            background: var(--bg-input);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            transition: all 0.25s ease;
+            overflow: hidden;
+        }
+
+        .message-item:hover {
+            border-color: rgba(255, 255, 255, 0.28);
+            background: var(--hover-bg);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.06);
+        }
+
+        .message-link {
+            text-decoration: none;
+            color: var(--text-main);
+            display: block;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .message-link b {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sender-text {
+            color: #f5f5f5;
+            font-weight: 500;
+            font-size: 13px;
+            margin-left: 4px;
+        }
+
+        .message-link .subject {
+            color: #f5f5f5;
+            font-weight: 600;
+            display: block;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .empty-box {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 35px 20px;
+            font-size: 13px;
+            background: var(--bg-input);
+            border-radius: 14px;
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            line-height: 1.5;
+        }
+
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #737373;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+        }
+    </style>
+</head>
+<body>
+    <div id="notificationAlert" class="alert-box">
+        <span id="notificationText">Aviso do sistema</span>
+    </div>
+
+    <div class="leaks-dashboard-wrapper">
+        <div class="main-card">
+            <!-- Cabeçalho Interno -->
+            <div class="dashboard-header">
+                <div class="logo-area">
+                    <img src="{{ url_for('static', filename='Logo.png') }}" alt="Leaks System" class="logo-gif" onerror="this.src='https://via.placeholder.com/42?text=NS'">
+                    <span class="brand-text">Leaks Mail</span>
+                </div>
+                <div class="header-actions">
+                    <a href="/client-logout" class="btn-pill">Sair</a>
+                </div>
+            </div>
+
+            <div class="title-row">
+                <h2>Caixa de Correio Protegida</h2>
+                <span class="badge-counter">
+                    {% if messages %}{{ messages|length }} Msg(s){% else %}0 Mensagens{% endif %}
+                </span>
+            </div>
+
+            <div class="email-info-box">
+                <span>E-mail Ativo</span>
+                <div class="email-badge">{{ email }}</div>
+            </div>
+            
+            <hr class="divider">
+            
+            <h3>Mensagens Recebidas</h3>
+            
+            {% if messages %}
+                <ul class="message-list">
+                {% for m in messages %}
+                    {% set sender = m.from.address if m.from is mapping else m.from %}
+                    <li class="message-item">
+                        <a href='/message/{{ email }}/{{ m.id }}' class="message-link">
+                            <b>De:</b><span class="sender-text">{{ sender }}</span>
+                            <span class="subject">{{ m.subject or 'Sem assunto' }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-box">
+                    Nenhuma mensagem recebida ainda.<br>Atualize a página periodicamente para verificar novas entradas.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        Todos os direitos reservados • Leaks System
+    </footer>
+
+    <script>
+        function showNotification(message) {
+            const alertBox = document.getElementById('notificationAlert');
+            const alertText = document.getElementById('notificationText');
+            
+            alertText.textContent = message;
+            alertBox.classList.add('show');
+
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 3500);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorMsg = urlParams.get('error');
+        const successMsg = urlParams.get('msg');
+        
+        if (errorMsg) {
+            showNotification(decodeURIComponent(errorMsg));
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search.replace(/[\?&]error=[^&]+/, ''));
+        } else if (successMsg) {
+            showNotification(decodeURIComponent(successMsg));
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search.replace(/[\?&]msg=[^&]+/, ''));
+        }
+    </script>
+</body>
+</html>

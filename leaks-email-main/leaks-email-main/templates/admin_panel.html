@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaks System - Painel Admin</title>
+    <style>
+        :root {
+            --bg-main: #050505;
+            --bg-card: rgba(15, 23, 42, 0.75);
+            --bg-input: #111111;
+            --border-color: rgba(255, 255, 255, 0.16);
+            --border-focus: #ffffff;
+            --primary: #ffffff;
+            --primary-hover: #d4d4d4;
+            --danger: rgba(239, 68, 68, 0.15);
+            --danger-border: rgba(239, 68, 68, 0.4);
+            --danger-text: #fca5a5;
+            --danger-hover: rgba(239, 68, 68, 0.25);
+            --info: rgba(255, 255, 255, 0.06);
+            --info-border: rgba(255, 255, 255, 0.22);
+            --info-text: #e5e5e5;
+            --info-hover: rgba(14, 165, 233, 0.25);
+            --text-main: #ffffff;
+            --text-muted: #a3a3a3;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 25px 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.035) 0%, transparent 45%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.035) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.018) 0%, transparent 60%);
+        }
+
+        /* Alerta Dinâmico Flutuante */
+        .alert-box {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-30px);
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            backdrop-filter: blur(16px);
+            color: #f5f5f5;
+            padding: 14px 24px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .alert-box.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Wrapper Principal */
+        .leaks-dashboard-wrapper {
+            max-width: 680px;
+            width: 100%;
+            position: relative;
+        }
+
+        .leaks-dashboard-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent, rgba(255, 255, 255, 0.24));
+            border-radius: 26px;
+            z-index: -1;
+            filter: blur(8px);
+            opacity: 0.7;
+        }
+
+        /* Cabeçalho Interno do Dashboard */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-gif {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.24);
+        }
+
+        .brand-text {
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            color: #f5f5f5;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-pill {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #f5f5f5;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-pill:hover {
+            background: rgba(255, 255, 255, 0.22);
+            border-color: var(--primary);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        .btn-pill.danger {
+            background: var(--danger);
+            border-color: var(--danger-border);
+            color: var(--danger-text);
+        }
+
+        .btn-pill.danger:hover {
+            background: var(--danger-hover);
+            border-color: #ef4444;
+        }
+
+        /* Cartão Central do Dashboard */
+        .main-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 35px 30px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        .title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 22px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--text-main);
+            letter-spacing: -0.3px;
+        }
+
+        .badge-counter {
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            color: #f5f5f5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Botão Gerar Destacado */
+        .btn-generate {
+            width: 100%;
+            background: linear-gradient(135deg, #ffffff 0%, #bdbdbd 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 15px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.28);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-generate::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-generate:hover::after {
+            left: 100%;
+        }
+
+        .btn-generate:hover {
+            background: linear-gradient(135deg, #d4d4d4 100%, #a3a3a3 100%);
+            box-shadow: 0 12px 30px rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .divider {
+            border: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            margin: 28px 0;
+        }
+
+        h3 {
+            color: #d4d4d4;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 16px 0;
+        }
+
+        /* Lista de Caixas */
+        .mailbox-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        /* Estilização da barra de scroll */
+        .mailbox-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .mailbox-list::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        .mailbox-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.22);
+            border-radius: 10px;
+        }
+
+        .mailbox-item {
+            background: var(--bg-input);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            transition: all 0.25s ease;
+        }
+
+        .mailbox-item:hover {
+            border-color: rgba(255, 255, 255, 0.24);
+            background: #181818;
+            transform: translateY(-1px);
+        }
+
+        .mailbox-info {
+            word-break: break-all;
+        }
+
+        .mailbox-info b {
+            color: #f5f5f5;
+            font-size: 14px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .mailbox-info small {
+            color: var(--text-muted);
+            display: block;
+            line-height: 1.6;
+            font-size: 12px;
+        }
+
+        .mailbox-info code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 5px;
+            color: #f5f5f5;
+            font-family: monospace;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .mailbox-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-copy {
+            background: var(--info);
+            border-color: var(--info-border);
+            color: var(--info-text);
+            flex: 1;
+        }
+
+        .btn-copy:hover {
+            background: var(--info-hover);
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            border-color: var(--danger-border);
+            color: var(--danger-text);
+            padding: 8px 16px;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger-hover);
+        }
+
+        .empty-message {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 30px;
+            font-size: 13px;
+            background: var(--bg-input);
+            border-radius: 14px;
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+
+        footer {
+            margin-top: 25px;
+            text-align: center;
+            color: #737373;
+            font-size: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        @media (min-width: 600px) {
+            .mailbox-item {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .mailbox-actions {
+                width: auto;
+                flex-shrink: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="notificationAlert" class="alert-box">
+        <span id="notificationText">Aviso do sistema</span>
+    </div>
+
+    <div class="leaks-dashboard-wrapper">
+        <div class="main-card">
+            <!-- Cabeçalho do Dashboard -->
+            <div class="dashboard-header">
+                <div class="logo-area">
+                    <img src="/static/Logo.png" alt="Leaks System" class="logo-gif" onerror="this.src='https://via.placeholder.com/42?text=NS'">
+                    <span class="brand-text">Leaks Admin</span>
+                </div>
+                <div class="header-actions">
+                    <a href="/logout-admin" class="btn-pill danger">Terminar Sessão</a>
+                </div>
+            </div>
+
+            <div class="title-row">
+                <h2>Gerador de Caixas</h2>
+                <span class="badge-counter">
+                    {% if mailboxes %}{{ mailboxes|length }} Ativa(s){% else %}0 Ativas{% endif %}
+                </span>
+            </div>
+            
+            <!-- Botão Criar E-mail -->
+            <form action="/admin-generate" method="POST">
+                <button type="submit" class="btn-generate">
+                    <span>⚡ Gerar Novo E-mail</span>
+                </button>
+            </form>
+            
+            <hr class="divider">
+            
+            <h3>Caixas Ativas Geradas</h3>
+            
+            <ul class="mailbox-list">
+                {% if mailboxes %}
+                    {% for email, data in mailboxes.items() %}
+                        <li class="mailbox-item">
+                            <div class="mailbox-info">
+                                <b>{{ email }}</b>
+                                <small>
+                                    Token: <code>{{ data.token }}</code> &nbsp;|&nbsp; Senha: <code>{{ data.password }}</code>
+                                </small>
+                            </div>
+                            <div class="mailbox-actions">
+                                <button onclick="copyCredentials('{{ email }}', '{{ data.token }}')" class="btn-action btn-copy">Copiar</button>
+                                <form action="/admin-delete" method="POST" style="margin: 0; display: inline-flex;">
+                                    <input type="hidden" name="email" value="{{ email }}">
+                                    <button type="submit" class="btn-action btn-delete">Excluir</button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="empty-message">Nenhuma caixa gerada até o momento. Clica em "Gerar Novo E-mail" acima.</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        Todos os direitos reservados • Leaks System
+    </footer>
+
+    <script>
+        function showNotification(message) {
+            const alertBox = document.getElementById('notificationAlert');
+            const alertText = document.getElementById('notificationText');
+            
+            alertText.textContent = message;
+            alertBox.classList.add('show');
+
+            setTimeout(() => {
+                alertBox.classList.remove('show');
+            }, 3500);
+        }
+
+        function copyCredentials(email, token) {
+            const text = email + ":" + token;
+            navigator.clipboard.writeText(text).then(function() {
+                showNotification("Credenciais copiadas: " + email);
+            }, function(err) {
+                showNotification("Erro ao copiar credenciais");
+            });
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorMsg = urlParams.get('error');
+        const successMsg = urlParams.get('msg');
+        
+        if (errorMsg) {
+            showNotification(decodeURIComponent(errorMsg));
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (successMsg) {
+            showNotification(decodeURIComponent(successMsg));
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    </script>
+</body>
+</html>
